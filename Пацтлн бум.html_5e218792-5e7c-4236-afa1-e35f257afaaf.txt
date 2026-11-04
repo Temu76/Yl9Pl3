@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>УВАГА!</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #000;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    /* Анімація блимання фону */
+    body.flashing {
+      animation: bgFlash 0.15s infinite alternate;
+    }
+
+    @keyframes bgFlash {
+      0% {
+        background-color: #ff0000;
+        color: #ffffff;
+      }
+      50% {
+        background-color: #000000;
+        color: #ff0000;
+      }
+      100% {
+        background-color: #ffffff;
+        color: #000000;
+      }
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .timer {
+      font-size: 6rem;
+      font-weight: bold;
+      margin: 20px 0;
+      font-family: monospace;
+    }
+
+    .warning-text {
+      font-size: 1.5rem;
+      font-weight: bold;
+      max-width: 90%;
+      line-height: 1.4;
+      margin-bottom: 30px;
+    }
+
+    .start-btn {
+      padding: 18px 36px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      background-color: #ff0000;
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+    }
+
+    .start-btn:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <button class="start-btn" id="startBtn">ЗАПУСТИТИ</button>
+
+  <div id="content" style="display: none;">
+    <h1>⚠️ КРИТИЧНА ПОМИЛКА ⚠️</h1>
+    <div class="timer" id="timer">67</div>
+    <div class="warning-text" id="statusText">ТЕЛЕФОН ВУЗРИВЕТЬСЯ ЧЕРЕЗ</div>
+  </div>
+
+  <script>
+    let timeLeft = 67;
+    let timerInterval = null;
+    let audioCtx = null;
+
+    const startBtn = document.getElementById('startBtn');
+    const content = document.getElementById('content');
+    const timerDisplay = document.getElementById('timer');
+    const statusText = document.getElementById('statusText');
+
+    function createBeepSound() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Звук сирени
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } catch (e) {
+        console.log("Аудіо не підтримується");
+      }
+    }
+
+    startBtn.addEventListener('click', () => {
+      startBtn.style.display = 'none';
+      content.style.display = 'block';
+      
+      // Вмикаємо блимання фону
+      document.body.classList.add('flashing');
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+
+        // Вібрація (якщо підтримується пристроєм)
+        if ("vibrate" in navigator) {
+          navigator.vibrate(200);
+        }
+
+        // Звуковий сигнал
+        createBeepSound();
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          timerDisplay.textContent = "0";
+          statusText.textContent = "💥 БУМ! ТЕЛЕФОН ВИБУХНУВ! 💥";
+          if ("vibrate" in navigator) {
+            navigator.vibrate([500, 100, 500, 100, 1000]);
+          }
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
